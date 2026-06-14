@@ -20,7 +20,7 @@ func (a *App) Start() {
 	go func() {
 		err := a.gRPCServer.Serve()
 		if err != nil {
-			log.Fatalf("%s\n%v", "grpc server did not start successfully", err)
+			log.Fatalf("%s\n\t%v", "grpc server did not start successfully", err)
 		}
 	}()
 	log.Println("grpc server started successfully")
@@ -29,7 +29,7 @@ func (a *App) Start() {
 }
 
 func (a *App) Stop() {
-	log.Println("Stopping application")
+	log.Println("stopping application")
 	err := a.gRPCServer.Shutdown()
 	if err != nil {
 		return
