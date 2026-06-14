@@ -1,1 +1,41 @@
-package api
+package main
+
+import (
+	"log"
+	"os"
+	"os/signal"
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/app"
+	"syscall"
+	"time"
+)
+
+func main() {
+	err := configs.Load()
+	if err != nil {
+		log.Fatalf("%s\n%v", "config did not load successfully", err)
+	}
+
+	application := app.NewApp()
+	application.Start()
+
+	ListenForGracefulShutdown(application)
+}
+
+func ListenForGracefulShutdown(application *app.App) {
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	done := make(chan bool)
+
+	go func() {
+		application.Stop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second * time.Duration(configs.Config.GracefulShutDownTimeout)):
+	}
+}

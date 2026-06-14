@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.21.12
-// source: logger/logger.proto
+// source: logger.proto
 
 package logger
 
@@ -155,5 +155,5 @@ var LogService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "logger/logger.proto",
+	Metadata: "logger.proto",
 }
