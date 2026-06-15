@@ -7,12 +7,12 @@ import (
 
 type WatchService struct {
 	rwMutex sync.RWMutex
-	subs    map[string]map[chan *model.LogEntry]struct{}
+	subs    map[string]map[chan *model.LogEntry]interface{}
 }
 
 func NewWatchService() *WatchService {
 	return &WatchService{
-		subs: make(map[string]map[chan *model.LogEntry]struct{}),
+		subs: make(map[string]map[chan *model.LogEntry]interface{}),
 	}
 }
 
@@ -31,7 +31,7 @@ func (w *WatchService) Subscribe(serviceName string, ch chan *model.LogEntry) {
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[serviceName]; !ok {
-		w.subs[serviceName] = make(map[chan *model.LogEntry]struct{})
+		w.subs[serviceName] = make(map[chan *model.LogEntry]interface{})
 	}
 	w.subs[serviceName][ch] = struct{}{}
 }

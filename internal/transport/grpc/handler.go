@@ -89,6 +89,7 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerStreamingServer[logger.LogEntry]) error {
 	channel := make(chan *model.LogEntry, 1000)
 	s.ws.Subscribe(request.ServiceName, channel)
+	defer close(channel)
 
 	for {
 		select {
