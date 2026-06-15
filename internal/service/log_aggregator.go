@@ -5,6 +5,7 @@ import (
 	"log"
 	"github.com/Behxrad/log_streamer/internal/model"
 	"github.com/Behxrad/log_streamer/internal/repository"
+	"runtime"
 	"sync"
 )
 
