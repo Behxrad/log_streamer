@@ -3,7 +3,9 @@ package grpc
 import (
 	"context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"io"
 	"net"
 	logger "github.com/Behxrad/log_streamer/api/proto"
@@ -87,6 +89,10 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 }
 
 func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerStreamingServer[logger.LogEntry]) error {
+	if request.ServiceName == "" {
+		return status.Errorf(codes.InvalidArgument, "service_name is required")
+	}
+
 	channel := s.ws.Subscribe(request.ServiceName)
 
 	for {
