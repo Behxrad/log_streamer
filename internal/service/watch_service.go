@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/Behxrad/log_streamer/configs"
 	"github.com/Behxrad/log_streamer/internal/model"
 	"sync"
 )
@@ -27,13 +28,17 @@ func (w *WatchService) Publish(logEntry *model.LogEntry) {
 	}
 }
 
-func (w *WatchService) Subscribe(serviceName string, ch chan *model.LogEntry) {
+func (w *WatchService) Subscribe(serviceName string) chan *model.LogEntry {
+	ch := make(chan *model.LogEntry, configs.Config.WatcherChannelSize)
+
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[serviceName]; !ok {
 		w.subs[serviceName] = make(map[chan *model.LogEntry]interface{})
 	}
 	w.subs[serviceName][ch] = struct{}{}
+
+	return ch
 }
 
 func (w *WatchService) Unsubscribe(serviceName string, ch chan *model.LogEntry) {
@@ -42,4 +47,5 @@ func (w *WatchService) Unsubscribe(serviceName string, ch chan *model.LogEntry) 
 	if _, ok := w.subs[serviceName]; ok {
 		delete(w.subs[serviceName], ch)
 	}
+	close(ch)
 }
