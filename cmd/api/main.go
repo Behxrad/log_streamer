@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -15,14 +16,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s\n%v", "config did not load successfully", err)
 	}
+	bgCTX := context.Background()
 
 	application := app.NewApp()
-	application.Start()
+	err = application.Start(bgCTX)
+	if err != nil {
+		log.Fatalf("%s\n%v", "failed to start the application", err)
+	}
 
 	ListenForGracefulShutdown(application)
 }
 
-func ListenForGracefulShutdown(application *app.App) {
+func ListenForGracefulShutdown(application app.App) {
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
@@ -30,7 +35,10 @@ func ListenForGracefulShutdown(application *app.App) {
 	done := make(chan bool)
 
 	go func() {
-		application.Stop()
+		err := application.Stop(context.Background())
+		if err != nil {
+			log.Println(err)
+		}
 		close(done)
 	}()
 
