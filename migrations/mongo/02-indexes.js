@@ -1,4 +1,4 @@
-db = db.getSiblingDB("logdb");
+db = db.getSiblingDB("log_db");
 
 db.application_logs.createIndex(
     {timestamp: -1},
