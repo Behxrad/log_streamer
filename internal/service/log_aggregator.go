@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log"
+	"github.com/Behxrad/log_streamer/configs"
 	"github.com/Behxrad/log_streamer/internal/model"
 	"github.com/Behxrad/log_streamer/internal/repository"
 	"runtime"
@@ -20,7 +21,7 @@ func NewLogAggregator(logRepo repository.LogRepository, watchService *WatchServi
 	aggregator := LogAggregator{
 		logRepo:   logRepo,
 		ws:        watchService,
-		logsChan:  make(chan *model.LogEntry, 100), //TODO: make the size configurable
+		logsChan:  make(chan *model.LogEntry, configs.Config.LogAggregatorChannelSize),
 		closeChan: make(chan bool),
 	}
 	go aggregator.initWorkers()
@@ -50,7 +51,7 @@ func (l LogAggregator) initWorkers() {
 
 func (l LogAggregator) worker(wg *sync.WaitGroup, jobs <-chan *model.LogEntry) {
 	defer wg.Done()
-	batch := make([]model.LogEntry, 0, 5) //TODO: make the size configurable
+	batch := make([]model.LogEntry, 0, configs.Config.LogAggregatorBatchSize)
 
 	for entry := range jobs {
 		batch = append(batch, *entry)
