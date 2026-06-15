@@ -11,8 +11,25 @@ services:
       MONGO_INITDB_ROOT_USERNAME: mongo_admin
       MONGO_INITDB_ROOT_PASSWORD: secret
     volumes:
-#      - mongo_db_data:/data/db
+      #      - mongo_db_data:/data/db
       - ../../migrations/mongo:/docker-entrypoint-initdb.d
+
+  app:
+    image: logger-service:latest
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    depends_on:
+      - mongo
+    ports:
+      - "50051:50051"
+    environment:
+      GRPC_ADDRESS: ":50051"
+      GRACEFUL_SHUTDOWN_TIMEOUT: "120"
+      MONGO_URI: "mongodb://app_user:app_password@mongo:27017/log_db"
+      LOG_AGGREGATOR_CHANNEL_SIZE: "1000"
+      LOG_AGGREGATOR_BATCH_SIZE: "100"
+      WATCHER_CHANNEL_SIZE: "1000"
 
 #volumes:
 #  mongo_db_data:
