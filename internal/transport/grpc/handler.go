@@ -25,11 +25,13 @@ type rpcServer struct {
 	logger.UnimplementedLogServiceServer
 	gs *grpc.Server
 	lg service.LogAggregator
+	ws *service.WatchService
 }
 
-func NewRPCServer(aggregator service.LogAggregator) Server {
+func NewRPCServer(aggregator service.LogAggregator, watchService *service.WatchService) Server {
 	return &rpcServer{
 		lg: aggregator,
+		ws: watchService,
 	}
 }
 
@@ -73,7 +75,7 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 			return err
 		}
 		for _, logEntry := range req.Logs {
-			s.lg.Process(model.LogEntry{
+			s.lg.Process(&model.LogEntry{
 				ServiceName: logEntry.ServiceName,
 				Level:       logEntry.Level,
 				Message:     logEntry.Message,
@@ -85,5 +87,29 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 }
 
 func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerStreamingServer[logger.LogEntry]) error {
-	return nil
+	channel := make(chan *model.LogEntry, 1000)
+	s.ws.Subscribe(request.ServiceName, channel)
+
+	for {
+		select {
+		case l, ok := <-channel:
+			if !ok {
+				return nil
+			}
+			log := &logger.LogEntry{
+				ServiceName: l.ServiceName,
+				Level:       l.Level,
+				Message:     l.Message,
+				Timestamp:   l.Timestamp.UnixMilli(),
+				Metadata:    l.MetaData,
+			}
+			if err := stream.Send(log); err != nil {
+				s.ws.Unsubscribe(request.ServiceName, channel)
+				return err
+			}
+		case <-stream.Context().Done():
+			s.ws.Unsubscribe(request.ServiceName, channel)
+			return stream.Context().Err()
+		}
+	}
 }

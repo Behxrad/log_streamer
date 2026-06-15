@@ -19,8 +19,9 @@ func NewApp() App {
 		log.Fatal(err)
 		return App{}
 	}
-	aggregator := service.NewLogAggregator(mongoRepository)
-	gRPCServer := grpc.NewRPCServer(aggregator)
+	watchService := service.NewWatchService()
+	aggregator := service.NewLogAggregator(mongoRepository, watchService)
+	gRPCServer := grpc.NewRPCServer(aggregator, watchService)
 
 	return App{
 		gRPCServer: gRPCServer,
