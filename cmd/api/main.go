@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/app"
 	"syscall"
 	"time"
+
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/app"
 )
 
 func main() {

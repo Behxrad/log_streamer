@@ -11,8 +11,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: mongo_admin
       MONGO_INITDB_ROOT_PASSWORD: secret
     volumes:
-#      - mongo_db_data:/data/db
+      - mongo_db_data:/data/db
       - ../../migrations/mongo:/docker-entrypoint-initdb.d
 
-#volumes:
-#  mongo_db_data:
+volumes:
+  mongo_db_data:

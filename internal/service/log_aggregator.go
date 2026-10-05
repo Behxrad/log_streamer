@@ -3,17 +3,18 @@ package service
 import (
 	"context"
 	"log"
-	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/model"
-	"github.com/Behxrad/log_streamer/internal/repository"
 	"runtime"
 	"sync"
+
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
+	"github.com/Behxrad/log_streamer/internal/port/outbound/repository"
 )
 
 type LogAggregator struct {
 	logRepo   repository.LogRepository
 	ws        *WatchService
-	logsChan  chan *model.LogEntry
+	logsChan  chan *entity.LogEntry
 	closeChan chan bool
 }
 
@@ -21,14 +22,14 @@ func NewLogAggregator(logRepo repository.LogRepository, watchService *WatchServi
 	aggregator := LogAggregator{
 		logRepo:   logRepo,
 		ws:        watchService,
-		logsChan:  make(chan *model.LogEntry, configs.Config.LogAggregatorChannelSize),
+		logsChan:  make(chan *entity.LogEntry, configs.Config.LogAggregatorChannelSize),
 		closeChan: make(chan bool),
 	}
 	go aggregator.initWorkers()
 	return aggregator
 }
 
-func (l LogAggregator) Process(entry *model.LogEntry) {
+func (l LogAggregator) Process(entry *entity.LogEntry) {
 	l.logsChan <- entry
 	l.ws.Publish(entry)
 }
@@ -49,9 +50,9 @@ func (l LogAggregator) initWorkers() {
 	l.closeChan <- true
 }
 
-func (l LogAggregator) worker(wg *sync.WaitGroup, jobs <-chan *model.LogEntry) {
+func (l LogAggregator) worker(wg *sync.WaitGroup, jobs <-chan *entity.LogEntry) {
 	defer wg.Done()
-	batch := make([]model.LogEntry, 0, configs.Config.LogAggregatorBatchSize)
+	batch := make([]entity.LogEntry, 0, configs.Config.LogAggregatorBatchSize)
 
 	for entry := range jobs {
 		batch = append(batch, *entry)

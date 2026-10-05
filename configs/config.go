@@ -8,7 +8,7 @@ type specification struct {
 	MongoURI                string `envconfig:"MONGO_URI" required:"true" default:"mongodb://localhost:27017"`
 
 	LogAggregatorChannelSize int `envconfig:"LOG_AGGREGATOR_CHANNEL_SIZE" required:"true" default:"1000"`
-	LogAggregatorBatchSize   int `envconfig:"LOG_AGGREGATOR_BATCH_SIZE" required:"true" default:"100"`
+	LogAggregatorBatchSize   int `envconfig:"LOG_AGGREGATOR_BATCH_SIZE" required:"true" default:"10"`
 
 	WatcherChannelSize int `envconfig:"WATCHER_CHANNEL_SIZE" required:"true" default:"1000"`
 }

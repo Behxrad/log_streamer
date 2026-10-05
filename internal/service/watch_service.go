@@ -1,23 +1,24 @@
 package service
 
 import (
-	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/model"
 	"sync"
+
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
 )
 
 type WatchService struct {
 	rwMutex sync.RWMutex
-	subs    map[string]map[chan *model.LogEntry]interface{}
+	subs    map[string]map[chan *entity.LogEntry]struct{}
 }
 
 func NewWatchService() *WatchService {
 	return &WatchService{
-		subs: make(map[string]map[chan *model.LogEntry]interface{}),
+		subs: make(map[string]map[chan *entity.LogEntry]struct{}),
 	}
 }
 
-func (w *WatchService) Publish(logEntry *model.LogEntry) {
+func (w *WatchService) Publish(logEntry *entity.LogEntry) {
 	w.rwMutex.RLock()
 	defer w.rwMutex.RUnlock()
 
@@ -28,20 +29,20 @@ func (w *WatchService) Publish(logEntry *model.LogEntry) {
 	}
 }
 
-func (w *WatchService) Subscribe(serviceName string) chan *model.LogEntry {
-	ch := make(chan *model.LogEntry, configs.Config.WatcherChannelSize)
+func (w *WatchService) Subscribe(serviceName string) chan *entity.LogEntry {
+	ch := make(chan *entity.LogEntry, configs.Config.WatcherChannelSize)
 
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[serviceName]; !ok {
-		w.subs[serviceName] = make(map[chan *model.LogEntry]interface{})
+		w.subs[serviceName] = make(map[chan *entity.LogEntry]struct{})
 	}
 	w.subs[serviceName][ch] = struct{}{}
 
 	return ch
 }
 
-func (w *WatchService) Unsubscribe(serviceName string, ch chan *model.LogEntry) {
+func (w *WatchService) Unsubscribe(serviceName string, ch chan *entity.LogEntry) {
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[serviceName]; ok {

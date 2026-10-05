@@ -2,18 +2,19 @@ package grpc
 
 import (
 	"context"
+	"io"
+	"net"
+	"time"
+
+	logger "github.com/Behxrad/log_streamer/api/proto"
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
+	"github.com/Behxrad/log_streamer/internal/port/inbound/log"
+	"github.com/Behxrad/log_streamer/pkg/lib"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"io"
-	"net"
-	logger "github.com/Behxrad/log_streamer/api/proto"
-	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/model"
-	"github.com/Behxrad/log_streamer/internal/service"
-	"github.com/Behxrad/log_streamer/pkg/lib"
-	"time"
 )
 
 type Server interface {
@@ -26,11 +27,11 @@ type Server interface {
 type rpcServer struct {
 	logger.UnimplementedLogServiceServer
 	gs *grpc.Server
-	lg service.LogAggregator
-	ws *service.WatchService
+	lg log.Aggregator
+	ws log.Watcher
 }
 
-func NewRPCServer(aggregator service.LogAggregator, watchService *service.WatchService) Server {
+func NewRPCServer(aggregator log.Aggregator, watchService log.Watcher) Server {
 	return &rpcServer{
 		lg: aggregator,
 		ws: watchService,
@@ -77,7 +78,7 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 			return err
 		}
 		for _, logEntry := range req.Logs {
-			s.lg.Process(&model.LogEntry{
+			s.lg.Process(&entity.LogEntry{
 				ServiceName: logEntry.ServiceName,
 				Level:       logEntry.Level,
 				Message:     logEntry.Message,

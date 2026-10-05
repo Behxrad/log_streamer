@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
+	"time"
+
+	"github.com/Behxrad/log_streamer/configs"
+	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/model"
-	"time"
 )
 
 type MongoLogRepository struct {
@@ -41,7 +42,7 @@ func (m MongoLogRepository) Close(ctx context.Context) error {
 	return m.Client.Disconnect(ctx)
 }
 
-func (m MongoLogRepository) InsertLogs(ctx context.Context, logs []model.LogEntry) error {
+func (m MongoLogRepository) InsertLogs(ctx context.Context, logs []entity.LogEntry) error {
 
 	_, err := m.Client.Database("log_db").
 		Collection("application_logs").

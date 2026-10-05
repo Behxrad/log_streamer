@@ -3,9 +3,10 @@ package app
 import (
 	"context"
 	"log"
-	"github.com/Behxrad/log_streamer/internal/repository"
+
+	"github.com/Behxrad/log_streamer/internal/adapter/inbound/transport/grpc"
+	"github.com/Behxrad/log_streamer/internal/adapter/outbound/repository"
 	"github.com/Behxrad/log_streamer/internal/service"
-	"github.com/Behxrad/log_streamer/internal/transport/grpc"
 )
 
 type App struct {

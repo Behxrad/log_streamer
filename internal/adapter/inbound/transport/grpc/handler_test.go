@@ -3,9 +3,10 @@ package grpc
 import (
 	"context"
 	"io"
-	logger "github.com/Behxrad/log_streamer/api/proto"
 	"testing"
 	"time"
+
+	logger "github.com/Behxrad/log_streamer/api/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
