@@ -1,24 +1,25 @@
 package service
 
 import (
+	log_svc "github.com/Behxrad/log_streamer/internal/port/inbound/log"
 	"sync"
 
 	"github.com/Behxrad/log_streamer/configs"
 	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
 )
 
-type WatchService struct {
+type watchService struct {
 	rwMutex sync.RWMutex
 	subs    map[string]map[chan *entity.LogEntry]struct{}
 }
 
-func NewWatchService() *WatchService {
-	return &WatchService{
+func NewWatchService() log_svc.Watcher {
+	return &watchService{
 		subs: make(map[string]map[chan *entity.LogEntry]struct{}),
 	}
 }
 
-func (w *WatchService) Publish(logEntry *entity.LogEntry) {
+func (w *watchService) Publish(logEntry *entity.LogEntry) {
 	w.rwMutex.RLock()
 	defer w.rwMutex.RUnlock()
 
@@ -29,7 +30,7 @@ func (w *WatchService) Publish(logEntry *entity.LogEntry) {
 	}
 }
 
-func (w *WatchService) Subscribe(serviceName string) chan *entity.LogEntry {
+func (w *watchService) Subscribe(serviceName string) chan *entity.LogEntry {
 	ch := make(chan *entity.LogEntry, configs.Config.WatcherChannelSize)
 
 	w.rwMutex.Lock()
@@ -42,7 +43,7 @@ func (w *WatchService) Subscribe(serviceName string) chan *entity.LogEntry {
 	return ch
 }
 
-func (w *WatchService) Unsubscribe(serviceName string, ch chan *entity.LogEntry) {
+func (w *watchService) Unsubscribe(serviceName string, ch chan *entity.LogEntry) {
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[serviceName]; ok {
