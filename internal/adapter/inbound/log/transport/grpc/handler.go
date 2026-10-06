@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"time"
 
 	logger "github.com/Behxrad/log_streamer/api/proto"
 	"github.com/Behxrad/log_streamer/configs"
-	"github.com/Behxrad/log_streamer/internal/domain/model/entity"
 	"github.com/Behxrad/log_streamer/internal/port/inbound/log"
 	"github.com/Behxrad/log_streamer/pkg/lib"
 	"google.golang.org/grpc"
@@ -78,13 +78,16 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 			return err
 		}
 		for _, logEntry := range req.Logs {
-			s.lg.Process(&entity.LogEntry{
+			err := s.lg.Process(log.ProcessLogCommand{LogEntry: &log.LogEntry{
 				ServiceName: logEntry.ServiceName,
 				Level:       logEntry.Level,
 				Message:     logEntry.Message,
 				Timestamp:   time.UnixMilli(logEntry.Timestamp),
-				MetaData:    logEntry.Metadata,
-			})
+				Metadata:    logEntry.Metadata,
+			}})
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -94,7 +97,10 @@ func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerSt
 		return status.Errorf(codes.InvalidArgument, "service_name is required")
 	}
 
-	channel := s.ws.Subscribe(request.ServiceName)
+	channel, err := s.ws.Subscribe(log.SubscribeLogsQuery{ServiceName: request.ServiceName})
+	if err != nil {
+		return err
+	}
 
 	for {
 		select {
@@ -102,19 +108,31 @@ func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerSt
 			if !ok {
 				return nil
 			}
-			log := &logger.LogEntry{
+			log_entry := &logger.LogEntry{
 				ServiceName: l.ServiceName,
 				Level:       l.Level,
 				Message:     l.Message,
 				Timestamp:   l.Timestamp.UnixMilli(),
-				Metadata:    l.MetaData,
+				Metadata:    l.Metadata,
 			}
-			if err := stream.Send(log); err != nil {
-				s.ws.Unsubscribe(request.ServiceName, channel)
+			if err := stream.Send(log_entry); err != nil {
+				inErr := s.ws.Unsubscribe(log.UnsubscribeLogsCommand{
+					ServiceName: request.ServiceName,
+					Stream:      channel,
+				})
+				if inErr != nil {
+					return errors.Join(err, inErr)
+				}
 				return err
 			}
 		case <-stream.Context().Done():
-			s.ws.Unsubscribe(request.ServiceName, channel)
+			err := s.ws.Unsubscribe(log.UnsubscribeLogsCommand{
+				ServiceName: request.ServiceName,
+				Stream:      channel,
+			})
+			if err != nil {
+				return errors.Join(stream.Context().Err(), err)
+			}
 			return stream.Context().Err()
 		}
 	}

@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/Behxrad/log_streamer/internal/adapter/inbound/transport/grpc"
-	"github.com/Behxrad/log_streamer/internal/adapter/outbound/repository"
-	"github.com/Behxrad/log_streamer/internal/service"
+	"github.com/Behxrad/log_streamer/internal/adapter/inbound/log/transport/grpc"
+	log_outbound "github.com/Behxrad/log_streamer/internal/adapter/outbound/log/repository"
+	log_service "github.com/Behxrad/log_streamer/internal/service/log"
 )
 
 type App struct {
@@ -15,13 +15,13 @@ type App struct {
 }
 
 func NewApp() App {
-	mongoRepository, err := repository.NewMongoRepository()
+	mongoRepository, err := log_outbound.NewMongoLogRepository()
 	if err != nil {
 		log.Fatal(err)
 		return App{}
 	}
-	watchService := service.NewWatchService()
-	aggregator := service.NewLogAggregator(mongoRepository, watchService)
+	watchService := log_service.NewWatcherService()
+	aggregator := log_service.NewAggregatorService(mongoRepository, watchService)
 	gRPCServer := grpc.NewRPCServer(aggregator, watchService)
 
 	return App{

@@ -1,4 +1,4 @@
-package repository
+package log
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/Behxrad/log_streamer/pkg/lib"
 )
 
-type LogRepository interface {
+type Repository interface {
 	lib.Closable
 	InsertLogs(context.Context, []entity.LogEntry) error
 }
