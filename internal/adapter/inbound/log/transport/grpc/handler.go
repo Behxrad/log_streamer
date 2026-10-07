@@ -78,7 +78,7 @@ func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk
 			return err
 		}
 		for _, logEntry := range req.Logs {
-			err := s.lg.Process(log.ProcessLogCommand{LogEntry: &log.LogEntry{
+			err := s.lg.Process(stream.Context(), log.ProcessLogCommand{LogEntry: &log.LogEntry{
 				ServiceName: logEntry.ServiceName,
 				Level:       logEntry.Level,
 				Message:     logEntry.Message,
@@ -97,7 +97,7 @@ func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerSt
 		return status.Errorf(codes.InvalidArgument, "service_name is required")
 	}
 
-	channel, err := s.ws.Subscribe(log.SubscribeLogsQuery{ServiceName: request.ServiceName})
+	channel, err := s.ws.Subscribe(stream.Context(), log.SubscribeLogsQuery{ServiceName: request.ServiceName})
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerSt
 				Metadata:    l.Metadata,
 			}
 			if err := stream.Send(log_entry); err != nil {
-				inErr := s.ws.Unsubscribe(log.UnsubscribeLogsCommand{
+				inErr := s.ws.Unsubscribe(stream.Context(), log.UnsubscribeLogsCommand{
 					ServiceName: request.ServiceName,
 					Stream:      channel,
 				})
@@ -126,7 +126,7 @@ func (s *rpcServer) WatchLogs(request *logger.WatchRequest, stream grpc.ServerSt
 				return err
 			}
 		case <-stream.Context().Done():
-			err := s.ws.Unsubscribe(log.UnsubscribeLogsCommand{
+			err := s.ws.Unsubscribe(stream.Context(), log.UnsubscribeLogsCommand{
 				ServiceName: request.ServiceName,
 				Stream:      channel,
 			})

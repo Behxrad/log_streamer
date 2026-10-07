@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"sync"
 
 	"github.com/Behxrad/log_streamer/configs"
@@ -18,7 +19,7 @@ func NewWatcherService() log.Watcher {
 	}
 }
 
-func (w *watcher) Publish(cmd log.PublishLogCommand) error {
+func (w *watcher) Publish(ctx context.Context, cmd log.PublishLogCommand) error {
 	w.rwMutex.RLock()
 	defer w.rwMutex.RUnlock()
 
@@ -30,7 +31,7 @@ func (w *watcher) Publish(cmd log.PublishLogCommand) error {
 	return nil
 }
 
-func (w *watcher) Subscribe(query log.SubscribeLogsQuery) (chan *log.LogEntry, error) {
+func (w *watcher) Subscribe(ctx context.Context, query log.SubscribeLogsQuery) (chan *log.LogEntry, error) {
 	ch := make(chan *log.LogEntry, configs.Config.WatcherChannelSize)
 
 	w.rwMutex.Lock()
@@ -43,7 +44,7 @@ func (w *watcher) Subscribe(query log.SubscribeLogsQuery) (chan *log.LogEntry, e
 	return ch, nil
 }
 
-func (w *watcher) Unsubscribe(cmd log.UnsubscribeLogsCommand) error {
+func (w *watcher) Unsubscribe(ctx context.Context, cmd log.UnsubscribeLogsCommand) error {
 	w.rwMutex.Lock()
 	defer w.rwMutex.Unlock()
 	if _, ok := w.subs[cmd.ServiceName]; ok {

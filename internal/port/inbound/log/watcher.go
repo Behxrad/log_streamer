@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"time"
 )
 
@@ -26,7 +27,7 @@ type UnsubscribeLogsCommand struct {
 }
 
 type Watcher interface {
-	Publish(cmd PublishLogCommand) error
-	Subscribe(query SubscribeLogsQuery) (chan *LogEntry, error)
-	Unsubscribe(cmd UnsubscribeLogsCommand) error
+	Publish(context.Context, PublishLogCommand) error
+	Subscribe(context.Context, SubscribeLogsQuery) (chan *LogEntry, error)
+	Unsubscribe(context.Context, UnsubscribeLogsCommand) error
 }

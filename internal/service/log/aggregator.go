@@ -30,7 +30,7 @@ func NewAggregatorService(logRepo log_outbound.Repository, watchService log_inbo
 	return aggregator
 }
 
-func (l aggregator) Process(entry log_inbound.ProcessLogCommand) error {
+func (l aggregator) Process(ctx context.Context, entry log_inbound.ProcessLogCommand) error {
 	logEntry := &entity.LogEntry{
 		ServiceName: entry.LogEntry.ServiceName,
 		Level:       entry.LogEntry.Level,
@@ -39,7 +39,7 @@ func (l aggregator) Process(entry log_inbound.ProcessLogCommand) error {
 		MetaData:    entry.LogEntry.Metadata,
 	}
 	l.logsChan <- logEntry
-	err := l.ws.Publish(log_inbound.PublishLogCommand{LogEntry: entry.LogEntry})
+	err := l.ws.Publish(ctx, log_inbound.PublishLogCommand{LogEntry: entry.LogEntry})
 	if err != nil {
 		return err
 	}

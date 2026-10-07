@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/Behxrad/log_streamer/pkg/lib"
 )
 
@@ -10,5 +12,5 @@ type ProcessLogCommand struct {
 
 type Aggregator interface {
 	lib.Closable
-	Process(cmd ProcessLogCommand) error
+	Process(context.Context, ProcessLogCommand) error
 }
