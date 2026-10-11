@@ -19,9 +19,7 @@ import (
 
 type Server interface {
 	logger.LogServiceServer
-	lib.Closable
-	Serve() error
-	Shutdown()
+	lib.Server
 }
 
 type rpcServer struct {
@@ -53,12 +51,8 @@ func (s *rpcServer) Serve() error {
 }
 
 func (s *rpcServer) Close(ctx context.Context) error {
-	s.Shutdown()
-	return nil
-}
-
-func (s *rpcServer) Shutdown() {
 	s.gs.GracefulStop()
+	return nil
 }
 
 func (s *rpcServer) IngestLogs(stream grpc.ClientStreamingServer[logger.LogChunk, logger.StatusResponse]) error {
